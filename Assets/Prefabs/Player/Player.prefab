@@ -9881,7 +9881,7 @@ MonoBehaviour:
   - {fileID: 1634988651183500757}
   - {fileID: 570368185146505050}
   _knockbackForce: 2
-  _damage: 7
+  _damage: 15
 --- !u!95 &3505160047946815770
 Animator:
   serializedVersion: 5
@@ -9987,7 +9987,7 @@ MonoBehaviour:
   _damageColliders:
   - {fileID: 1177226633406361989}
   _knockbackForce: 7
-  _damage: 25
+  _damage: 27
 --- !u!50 &8335145666404061762
 Rigidbody2D:
   serializedVersion: 4
@@ -10400,7 +10400,7 @@ MonoBehaviour:
   _damageColliders:
   - {fileID: 7538812743856565791}
   _knockbackForce: 3
-  _damage: 15
+  _damage: 20
 --- !u!50 &2893435684985626591
 Rigidbody2D:
   serializedVersion: 4
@@ -11916,7 +11916,7 @@ MonoBehaviour:
   _damageColliders:
   - {fileID: 7370321116905094864}
   _knockbackForce: 6
-  _damage: 40
+  _damage: 28
 --- !u!50 &768440730208634691
 Rigidbody2D:
   serializedVersion: 4
@@ -12417,7 +12417,7 @@ MonoBehaviour:
   _damageColliders:
   - {fileID: 7110703056029396653}
   _knockbackForce: 5
-  _damage: 30
+  _damage: 24
 --- !u!50 &4487110619372721089
 Rigidbody2D:
   serializedVersion: 4
@@ -13053,7 +13053,7 @@ MonoBehaviour:
   _damageColliders:
   - {fileID: 1345676714119956946}
   _knockbackForce: 6
-  _damage: 20
+  _damage: 27
 --- !u!50 &3542577944182703236
 Rigidbody2D:
   serializedVersion: 4
@@ -14123,7 +14123,7 @@ MonoBehaviour:
   - {x: -0.02024428, y: -0.3340306, z: 0}
   m_ShapePathHash: -1827723827
   m_Mesh: {fileID: 0}
-  m_InstanceId: 31426
+  m_InstanceId: 37558
   m_LocalBounds:
     m_Center: {x: -0.0033740401, y: 0.02024427, z: 0}
     m_Extent: {x: 0.33740467, y: 0.35427487, z: 0}

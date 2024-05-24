@@ -7,6 +7,13 @@ public abstract class ShootAmmo : NetworkBehaviour, ISpawnable
     [SerializeField] protected int _damage = 10;
     [SerializeField] protected float _knockbackForce = 2;
 
+    public GameObject ThisGO { get; set; }
+
+    private void Start()
+    {
+        ThisGO = gameObject;
+    }
+
     public abstract void StopFly();
 
     public abstract void StartFly(float rotation);

@@ -28,4 +28,9 @@ public class PlayerHealth : NetworkBehaviour
     {
         _damageIndicator.color = new Color(1, 1, 1, 1 - (float)newHealth / _maxHealth);
     }
+
+    public void HealthReset()
+    {
+        _health = _maxHealth;
+    }
 }

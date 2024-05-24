@@ -7,11 +7,15 @@ public class LobbyButton : NetworkBehaviour
 {
     [SerializeField] private Button _button;
     private LobbyData _lobbyData;
+    private PasswordCheck _passwordCheck;
+    private LobbyListObject _lobbyListObject;
 
     private void Start()
     {
         _lobbyData = GetComponent<LobbyData>();
-        transform.parent = GameObject.FindGameObjectWithTag("LobbyUIParent").transform;
+        _lobbyListObject = FindFirstObjectByType<LobbyListObject>();
+        transform.parent = _lobbyListObject.LobbyParent;
+        _passwordCheck = _lobbyListObject.PasswordCheck;
     }
 
     public void OnEnable()
@@ -27,10 +31,19 @@ public class LobbyButton : NetworkBehaviour
     [Client]
     public void ConnectToServer()
     {
-        if(_lobbyData.PlayersCount < 4)
+        if(_lobbyData.Locked == true)
+        {
+            _lobbyListObject.gameObject.SetActive(false);
+            _passwordCheck.gameObject.SetActive(true);
+
+            _passwordCheck.SetData(_lobbyData.Password, _lobbyData.Port);
+        }
+        else
         {
             var netManager = NetworkManager.singleton as ProjectNetworkManager;
+
             netManager.LoggingIntoGame(_lobbyData.Port);
         }
+
     }
 }

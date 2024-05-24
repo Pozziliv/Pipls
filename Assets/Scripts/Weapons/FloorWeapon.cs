@@ -11,6 +11,7 @@ public class FloorWeapon : NetworkBehaviour, ISpawnable
     [SerializeField] private int _damage = 10;
     [SerializeField] private float _knockbackForce = 2;
     [SerializeField] private float _flyForce = 4;
+    [SerializeField] private GameObject _ammo;
 
     private bool _flyMode = false;
 
@@ -19,6 +20,15 @@ public class FloorWeapon : NetworkBehaviour, ISpawnable
     private float _cantPickUpTime = 1f;
 
     private int _ricochets = 1;
+
+    public GameObject Ammo => _ammo;
+
+    public GameObject ThisGO { get ; set; }
+
+    private void Start()
+    {
+        ThisGO = gameObject;
+    }
 
     [ServerCallback]
     private void Update()

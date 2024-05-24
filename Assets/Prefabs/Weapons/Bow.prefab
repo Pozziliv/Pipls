@@ -263,6 +263,7 @@ MonoBehaviour:
   _damage: 10
   _knockbackForce: 2
   _flyForce: 4
+  _ammo: {fileID: 5483797649880805912, guid: b26681fd3137486409dc3280db9860ad, type: 3}
 --- !u!114 &8314255396698604692
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -24,6 +24,8 @@ public class ProjectNetworkManager : NetworkManager
 
     public override void Start()
     {
+        base.Start();
+
         if(TransitionsData.Port != null && TransitionsData.Scene != null)
         {
             ChangeOnlineScene(TransitionsData.Scene);
@@ -35,9 +37,19 @@ public class ProjectNetworkManager : NetworkManager
 
     private IEnumerator LoadToServer()
     {
-        yield return new WaitForSecondsRealtime(10f);
+        yield return new WaitForSecondsRealtime(7f);
 
         StartClient();
+
+        yield return new WaitForSecondsRealtime(10f);
+
+        if (isNetworkActive == false)
+        {
+            ChangeOnlineScene(_lobbyScene);
+            SetPort("7000");
+
+            StartClient();
+        }
     }
 
     public void SetPort(string port)

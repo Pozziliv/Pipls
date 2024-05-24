@@ -179,6 +179,7 @@ MonoBehaviour:
   _damage: 10
   _knockbackForce: 2
   _flyForce: 4
+  _ammo: {fileID: 0}
 --- !u!114 &2393995068515896158
 MonoBehaviour:
   m_ObjectHideFlags: 0

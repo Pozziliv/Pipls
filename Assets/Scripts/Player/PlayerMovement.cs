@@ -34,7 +34,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (_playerManager.IsDead == true || _playerManager.GameStarted == false || _inDash) return;
+        if (isLocalPlayer == false) return;
+
+        if (_playerManager.IsDead == true || _inDash) return;
 
         _input = (Vector2.up * Input.GetAxisRaw("Vertical") + Vector2.right * Input.GetAxisRaw("Horizontal")).normalized;
 
@@ -48,7 +50,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         if(isLocalPlayer == false) return;
 
-        if(_playerManager.IsDead == true || _playerManager.GameStarted == false || _inDash) return;
+        if(_playerManager.IsDead == true || _inDash) return;
 
         if (_isKnockBack == true)
         {
@@ -99,7 +101,7 @@ public class PlayerMovement : NetworkBehaviour
 
         while(timer < _dashCooldown)
         {
-            _dashIndicator.sharedMaterial.SetFloat("_Arc2", fillPartInSecond * timer);
+            _dashIndicator.material.SetFloat("_Arc2", fillPartInSecond * timer);
             _dashIndicator.transform.eulerAngles = Vector3.zero;
             timer += Time.deltaTime;
             yield return null;

@@ -257,7 +257,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _rigidbody: {fileID: 4768865074988075542}
-  _damage: 50
+  _damage: 35
   _knockbackForce: 4
   _floorCollider: {fileID: 9081384882547150351}
   _flyCollider: {fileID: 4653782520643816411}

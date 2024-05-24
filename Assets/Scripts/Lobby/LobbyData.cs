@@ -1,25 +1,27 @@
 using Mirror;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LobbyData : NetworkBehaviour
 {
-    [SerializeField] private TMP_Text _playersCount;
-    [SerializeField, SyncVar] private string _port;
-    [SerializeField, SyncVar(hook = nameof(ChangePlayersCount))] private int _players = 0;
+    [SerializeField] private TMP_Text _lobbyNumber;
+    [SerializeField] private TMP_Text _lobbyName;
+    [SerializeField] private Image _lockImage;
+    [SerializeField] private Image _unlockImage;
+    [SyncVar] private string _port;
+    [SyncVar(hook=nameof(ChangeName))] private string _name = string.Empty;
+    [SyncVar] private string _password;
+    [SyncVar(hook =nameof(ChangeLock))] private bool _locked;
 
-    public int PlayersCount => _players;
+    public string Name => _name;
+    public string Password => _password;
+    public bool Locked => _locked;
     public string Port => _port;
 
     private void Start()
     {
-        _playersCount.text = _players.ToString();
-    }
-
-    [Server]
-    public void AddPlayer()
-    {
-        _players++;
+        _lobbyName.text = _name;
     }
 
     [Server]
@@ -28,13 +30,33 @@ public class LobbyData : NetworkBehaviour
         _port = port;
     }
 
-    public void SetPlayers(int count)
+    [Server]
+    public void SetData(bool locked, string name)
     {
-        _players = count;
+        _locked = locked;
+        _name = name;
     }
 
-    private void ChangePlayersCount(int oldCOunt, int newCount)
+    [Server]
+    public void SetPassword(string password)
     {
-        _playersCount.text = newCount.ToString() + "/4";
+        _password = password;
+    }
+
+    [ClientRpc]
+    public void RpcChangeNumber(int number)
+    {
+        _lobbyNumber.text = number.ToString();
+    }
+
+    private void ChangeName(string oldName, string newName)
+    {
+        _lobbyName.text = newName;
+    }
+
+    private void ChangeLock(bool oldLock, bool newLock)
+    {
+        _unlockImage.gameObject.SetActive(oldLock);
+        _lockImage.gameObject.SetActive(newLock);
     }
 }

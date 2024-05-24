@@ -1,6 +1,5 @@
 using kcp2k;
 using Mirror;
-using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,46 +7,46 @@ public class LobbyServer : NetworkBehaviour
 {
     private Requester _requester;
 
+    [Server]
     private void Start()
     {
         _requester = new Requester();
         _requester.Start();
+
+        StartCoroutine(UpdatePlayers());
     }
 
-    public override void OnStartClient()
+    public override void OnStopClient()
     {
-        base.OnStartClient();
+        base.OnStopClient();
 
-        CmdUpdatePlayers();
+        var netManager = NetworkManager.singleton as ProjectNetworkManager;
+        netManager.BackToLobby();
     }
 
-    [Client]
-    private void OnDisable()
+    private IEnumerator UpdatePlayers()
     {
-        CmdUpdatePlayers();
-    }
+        var waitTime = new WaitForSeconds(10f);
 
-    [Command(requiresAuthority = false)]
-    private void CmdUpdatePlayers()
-    {
-        int players = NetworkServer.connections.Count;
-        ushort port = (NetworkManager.singleton.transport as KcpTransport).port;
-        _requester.SendMessage("SetPlayers " + port + " " + players);
-
-        if(players == 0)
+        while (true)
         {
-            _requester.SendMessage("DeleteServer " + port);
-            Application.Quit();
+            yield return waitTime;
+
+            int players = NetworkServer.connections.Count;
+
+            if (players == 0)
+            {
+                ushort port = (NetworkManager.singleton.transport as KcpTransport).port;
+                string tempString = _requester.SendMessage("DeleteServer " + port);
+                break;
+            }
         }
+        _requester.Stop();
+        Application.Quit();
     }
 
+    [Server]
     private void OnDestroy()
-    {
-        if (_requester != null)
-            _requester.Stop();
-    }
-
-    private void OnApplicationQuit()
     {
         if (_requester != null)
             _requester.Stop();

@@ -1,7 +1,7 @@
 using Mirror;
 using UnityEngine;
 
-public class Arrow : ShootAmmo
+public class Arrow : ShootAmmo, IAmmo, ISpawnable
 {
     [SerializeField] protected Collider2D _floorCollider;
     [SerializeField] protected Collider2D _flyCollider;

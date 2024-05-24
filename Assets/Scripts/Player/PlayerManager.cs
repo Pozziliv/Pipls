@@ -29,15 +29,41 @@ public class PlayerManager : NetworkBehaviour
     [SyncVar] private bool _isDead = false;
     [SyncVar] private bool _isInvulnerable = false;
 
-    private bool _gameStarted = true;
+    private bool _gameStarted = false;
     private GameManager _gameManager;
 
     public Action OnDead;
-    public Action OnStartGame;
 
+    public int Index => _index;
     public bool IsDead => _isDead;
     public bool GameStarted => _gameStarted;
     public bool IsInvulnerable => _isInvulnerable;
+
+    private void OnEnable()
+    {
+        if(_gameManager != null)
+        {
+            _gameManager.OnGameStartRestarting += HideMainParts;
+
+            _gameManager.OnGameStarted += GameStart;
+            _gameManager.OnGameStarted += ShowMainParts;
+            _gameManager.OnGameStarted += HideDieParts;
+            _gameManager.OnGameStarted += HealthReset;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if(_gameManager != null)
+        {
+            _gameManager.OnGameStartRestarting -= HideMainParts;
+
+            _gameManager.OnGameStarted -= GameStart;
+            _gameManager.OnGameStarted -= ShowMainParts;
+            _gameManager.OnGameStarted -= HideDieParts;
+            _gameManager.OnGameStarted -= HealthReset;
+        }
+    }
 
     public override void OnStartServer()
     {
@@ -49,25 +75,57 @@ public class PlayerManager : NetworkBehaviour
         {
             _index = _gameManager.SetPlayerIndex();
         }
+
+        if(_gameManager != null) 
+        {
+            _gameManager.OnGameStarted += GameStart;
+            _gameManager.OnGameStarted += ShowMainParts;
+            _gameManager.OnGameStarted += HideDieParts;
+            _gameManager.OnGameStarted += HealthReset;
+        }
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        _gameManager = FindFirstObjectByType<GameManager>();
+
+        if (_gameManager != null) { 
+            _gameManager.SetPlayerManager(this);
+
+            _gameManager.OnGameStartRestarting += HideMainParts;
+
+            _gameManager.OnGameStarted += GameStart;
+            _gameManager.OnGameStarted += ShowMainParts;
+            _gameManager.OnGameStarted += HideDieParts;
+            _gameManager.OnGameStarted += HealthReset;
+        }
     }
 
     public void GameStart()
     {
-
+        _gameStarted = true;
+        _isDead = false;
     }
 
     private void SetSprites(int oldIndex, int newIndex)
     {
-        _body.sprite = _bodySprites[newIndex];
+        _body.sprite = _bodySprites[newIndex % 4];
         foreach (var hand in _hands)
         {
-            hand.sprite = _handsSprites[newIndex];
+            hand.sprite = _handsSprites[newIndex % 4];
         }
         foreach (var particle in _particles)
         {
             var mainPart = particle.main;
-            mainPart.startColor = _particleColors[newIndex];
+            mainPart.startColor = _particleColors[newIndex % 4];
         }
+    }
+
+    private void HealthReset()
+    {
+        _playerHealth.HealthReset();
     }
 
     [Server]
@@ -76,6 +134,7 @@ public class PlayerManager : NetworkBehaviour
         _isDead = true;
         HideMainParts();
         RpcDie();
+        _gameManager.PlayerDie();
     }
 
     [ClientRpc]

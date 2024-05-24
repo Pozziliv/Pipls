@@ -38,7 +38,7 @@ public class PlayerAttack : NetworkBehaviour
     {
         if (isLocalPlayer == false) return;
 
-        if (_playerManager.IsDead == true) return;
+        if (_playerManager.IsDead == true || _playerManager.GameStarted == false) return;
 
         if (Input.GetMouseButtonDown(0))
         {

@@ -9,12 +9,14 @@ public class StartZone : NetworkBehaviour
     [SerializeField] private AnimationCurve _fillCurve;
     [SerializeField] private float _fillTime = 3f;
 
-    private float process = 0f;
+    private float _process = 0f;
 
     private Material _material;
 
     private int _playersCount;
     private int _playersInZone;
+
+    private bool _activated = false;
 
     private void Start()
     {
@@ -32,21 +34,24 @@ public class StartZone : NetworkBehaviour
     {
         _playersInZone -= 1;
 
-        _material.SetFloat("_Arc2", 0);
+        _material.SetFloat("_Arc2", 360);
+
+        _process = 0;
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (_playersCount == _playersInZone && _fillTime > process)
+        if (_playersCount == _playersInZone && _fillTime > _process)
         {
-            _material.SetFloat("_Arc2", 360 - _fillCurve.Evaluate(process / _fillTime) * 360);
+            _material.SetFloat("_Arc2", 360 - _fillCurve.Evaluate(_process / _fillTime) * 360);
 
-            process += Time.deltaTime;
+            _process += Time.deltaTime;
         }
 
-        if(process > _fillTime)
+        if(_process > _fillTime && _activated == false)
         {
             _gameManager.RestartRound();
+            _activated = true;
         }
     }
 }

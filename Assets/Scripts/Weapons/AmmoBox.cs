@@ -1,10 +1,17 @@
 using Mirror;
 using UnityEngine;
 
-public class AmmoBox : NetworkBehaviour, ISpawnable
+public class AmmoBox : NetworkBehaviour, ISpawnable, IAmmo
 {
     [SerializeField] private int _ammoCount = 1;
     [SerializeField] private string _weaponName;
+
+    public GameObject ThisGO { get; set; }
+
+    private void Start()
+    {
+        ThisGO = gameObject;
+    }
 
     [Server]
     private void OnTriggerEnter2D(Collider2D collision)

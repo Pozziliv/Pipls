@@ -316,5 +316,5 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _rigidbody: {fileID: 4768865074988075542}
-  _damage: 4
+  _damage: 5
   _knockbackForce: 1
