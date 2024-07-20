@@ -15,6 +15,7 @@ public class LobbyButton : NetworkBehaviour
         _lobbyData = GetComponent<LobbyData>();
         _lobbyListObject = FindFirstObjectByType<LobbyListObject>();
         transform.parent = _lobbyListObject.LobbyParent;
+        transform.localScale = Vector3.one;
         _passwordCheck = _lobbyListObject.PasswordCheck;
     }
 

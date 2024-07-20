@@ -10,6 +10,9 @@ public class PlayerHealth : NetworkBehaviour
 
     [SerializeField] private SpriteRenderer _damageIndicator;
 
+    [SerializeField] private AudioSource _damageSource;
+    [SerializeField] private AudioSource _dieSource;
+
     public void GetDamage(int damage)
     {
         if(_manager.IsInvulnerable == true) return;
@@ -22,6 +25,22 @@ public class PlayerHealth : NetworkBehaviour
         {
             _manager.ServerDie();
         }
+        else
+        {
+            _damageSource.Play();
+        }
+    }
+
+    [ClientRpc]
+    private void RpcPlayDieSound()
+    {
+        _dieSource.Play();
+    }
+
+    [ClientRpc]
+    private void RpcPlayDamageSound()
+    {
+        _damageSource.Play();
     }
 
     private void ChangeDamageIndicator(int oldHealth, int newHealth)
@@ -31,6 +50,13 @@ public class PlayerHealth : NetworkBehaviour
 
     public void HealthReset()
     {
-        _health = _maxHealth;
+        _health = 100;
+        RpcResetHPBar();
+    }
+
+    [ClientRpc]
+    private void RpcResetHPBar()
+    {
+        _damageIndicator.color = new Color(1, 1, 1, 0);
     }
 }

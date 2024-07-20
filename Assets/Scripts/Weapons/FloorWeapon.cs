@@ -64,7 +64,7 @@ public class FloorWeapon : NetworkBehaviour, ISpawnable
     [Server]
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.TryGetComponent(out PlayerAttack playerAttack) && playerAttack.netIdentity.connectionToClient != _sender)
+        if(collision.TryGetComponent(out PlayerAttack playerAttack) && playerAttack.netIdentity.connectionToClient != _sender && _flyMode is false)
         {
             if(playerAttack.Weapon.gameObject.name == "Arms")
             {

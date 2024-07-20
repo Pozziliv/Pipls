@@ -3,7 +3,7 @@ import json
 import subprocess
 from Constants import *  # false and true
 
-serversPath = input()
+serversPath = input() #D:\UnityProjects\Pipls\Build2\Pipls.exe
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)

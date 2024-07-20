@@ -10,6 +10,8 @@ public class PlayerAttack : NetworkBehaviour
 
     [SerializeField] private PlayerManager _playerManager;
 
+    [SerializeField] private AudioSource _throughWeapon;
+
     public Weapon Weapon => _weapon;
 
     private void Start()
@@ -26,12 +28,14 @@ public class PlayerAttack : NetworkBehaviour
     private void OnEnable()
     {
         _playerManager.OnDead += StopWeaponAttack;
+        _playerManager.OnDead += DropThisWeapon;
     }
 
     [Client]
     private void OnDisable()
     {
         _playerManager.OnDead -= StopWeaponAttack;
+        _playerManager.OnDead -= DropThisWeapon;
     }
 
     private void Update()
@@ -57,8 +61,8 @@ public class PlayerAttack : NetworkBehaviour
             }
             else
             {
-                _playerManager.DropWeapon(_weapon);
-                CmdClearWeapon();
+                DropThisWeapon();
+                _throughWeapon.Play();
             }
         }
 
@@ -70,7 +74,7 @@ public class PlayerAttack : NetworkBehaviour
 
     public void ServerChangeWeapon(string name)
     {
-        _weapon.gameObject.SetActive(false);
+        //_weapon.gameObject.SetActive(false);
 
         Weapon newWeapon = _allWeapons.First(x => x.gameObject.name == name);
         newWeapon.gameObject.SetActive(true);
@@ -84,6 +88,7 @@ public class PlayerAttack : NetworkBehaviour
     public void RpcChangeWeapon(Weapon oldWeapon, Weapon newWeapon)
     {
         oldWeapon.CmdStopAttack();
+        newWeapon.ResetPositions();
         oldWeapon.gameObject.SetActive(false);
 
         newWeapon.gameObject.SetActive(true);
@@ -96,8 +101,24 @@ public class PlayerAttack : NetworkBehaviour
     }
 
     [Client]
-    private void StopWeaponAttack()
+    public void StopWeaponAttack()
     {
         _weapon.CmdStopAttack();
+    }
+
+    private void DropThisWeapon()
+    {
+        if(_weapon.Index == 0) 
+        {
+            return;
+        }
+
+        if(_weapon.RangeWeapon == true)
+        {
+            (_weapon as RangeWeapon).CmdResetAmmo();
+        }
+
+        _playerManager.DropWeapon(_weapon);
+        CmdClearWeapon();
     }
 }

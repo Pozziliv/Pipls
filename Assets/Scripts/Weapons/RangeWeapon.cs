@@ -5,7 +5,8 @@ public class RangeWeapon : Weapon
 {
     [SerializeField] private ShootAmmo _bullet;
     [SerializeField] private Transform _shootPosition;
-    [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private GameObject _ammoReady;
+    [SerializeField] private AudioSource _nullAmmoSound;
     private int _ammo;
 
     [SyncVar(hook = nameof(SetBullet))] private bool _isReady = false;
@@ -13,9 +14,16 @@ public class RangeWeapon : Weapon
     public bool IsReady => _isReady;
     public ShootAmmo Bullet => _bullet;
 
+    [Command]
+    public void CmdResetAmmo()
+    {
+        _isReady = false;
+        _ammo = 0;
+    }
+
     private void SetBullet(bool oldBool, bool newBool)
     {
-        _spriteRenderer.enabled = newBool;
+        _ammoReady.SetActive(newBool);
     }
 
     public void SetReady(int ammoCount)
@@ -29,11 +37,14 @@ public class RangeWeapon : Weapon
     {
         if (_isReady)
         { 
-            var angle = _parentManager.transform.localEulerAngles.z;
+            var angle = _parentManager.BodyRotation.eulerAngles.z;
 
             var spawnedBullet = Instantiate(_bullet, _shootPosition.position, Quaternion.identity);
 
             spawnedBullet.SetDirection(angle);
+
+            FindFirstObjectByType<GameManager>().AddSpawnedThing(spawnedBullet);
+
             NetworkServer.Spawn(spawnedBullet.gameObject);
 
             spawnedBullet.StartFly(angle);
@@ -44,6 +55,18 @@ public class RangeWeapon : Weapon
             {
                 _isReady = false;
             }
+        }
+    }
+
+    public override void PlayAttackSound()
+    {
+        if(_ammo == 0)
+        {
+            _nullAmmoSound.Play();
+        }
+        else
+        {
+            _attackAudio.Play();
         }
     }
 }

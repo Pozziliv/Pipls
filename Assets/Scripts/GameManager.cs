@@ -11,7 +11,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private List<Map> _maps;
     private Map _chosenMap;
-    private int _mapIndex = 0;
+    [SyncVar] private int _mapIndex = -1;
 
     private PlayerManager _pinnedPlayerManager;
 
@@ -29,8 +29,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private FloorWeapon[] _floorWeapons;
     [SerializeField] private int _weaponCount = 5;
     private List<ISpawnable> _spawnedWeapons = new List<ISpawnable>();
+    [SerializeField] private InstaParticles[] _instaParticles;
 
-    [SyncVar] private int _playerIndex = 0;
+    private bool[] _playerIndex = { false, false, false, false };
 
     private int _diedPlayers;
 
@@ -39,15 +40,11 @@ public class GameManager : NetworkBehaviour
 
 
 
-    [SerializeField] private AudioSource _audioSource;
-
-
-
-
-
     private void Start()
     {
         _camera = Camera.main;
+
+        StartCoroutine(UpscaleToFight());
 
         _lobbyMap.MapObject.SetActive(false);
         foreach (var map in _maps)
@@ -55,9 +52,12 @@ public class GameManager : NetworkBehaviour
             map.MapObject.SetActive(false);
         }
 
-        if(_chosenMap != null)
+        if(_mapIndex != -1)
         {
+            _chosenMap = _maps[_mapIndex];
             _chosenMap.MapObject.SetActive(true);
+
+            StartCoroutine(GmaeStartForPlayerWhoGetInGameThenGameAlreadyWasPlayed());
         }
         else
         {
@@ -66,15 +66,54 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    private IEnumerator GmaeStartForPlayerWhoGetInGameThenGameAlreadyWasPlayed()
+    {
+        yield return new WaitForSeconds(1f);
+
+        OnGameStarted.Invoke();
+    }
+
+    private IEnumerator UpscaleToFight()
+    {
+        float progress = 0f;
+
+        Color whiteTransparent = new Color(1, 1, 1, 0);
+
+        float cameraStartSize = _camera.orthographicSize;
+
+        while (progress <= 1f)
+        {
+            _camera.orthographicSize = Mathf.Lerp(cameraStartSize + 450f, cameraStartSize, _earthTransitionCurve.Evaluate(progress));
+            _whitePanel.color = Color.Lerp(Color.white, whiteTransparent, _earthTransitionCurve.Evaluate(progress));
+
+            progress += Time.deltaTime / _cameraRollTime;
+
+            yield return null;
+        }
+    }
+
     public override void OnStartServer()
     {
         base.OnStartServer();
-        _mapIndex = 0;
+        _mapIndex = -1;
     }
 
     public int SetPlayerIndex()
     {
-        return _playerIndex++;
+        for (int i = 0; i < 4; i++)
+        {
+            if (_playerIndex[i] is false)
+            {
+                _playerIndex[i] = true;
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public void ResolvePlayerIndex(int index)
+    {
+        _playerIndex[index] = false;
     }
 
     public void SetPlayerManager(PlayerManager manager)
@@ -101,7 +140,7 @@ public class GameManager : NetworkBehaviour
 
         foreach (var weapon in _spawnedWeapons)
         {
-            if(weapon == null) continue;
+            if (weapon == null) continue;
 
             NetworkServer.Destroy(weapon.ThisGO);
             Destroy(weapon.ThisGO);
@@ -113,7 +152,7 @@ public class GameManager : NetworkBehaviour
     private void ChooseNextMap()
     {
         _chosenMap.MapObject.SetActive(false);
-        _chosenMap = _maps[_mapIndex++ % _maps.Count()];
+        _chosenMap = _maps[++_mapIndex % _maps.Count()];
         _chosenMap.MapObject.SetActive(true);
     }
 
@@ -122,7 +161,10 @@ public class GameManager : NetworkBehaviour
     {
         Vector2 battlePointOnEarth = _earthTransitionPoints[UnityEngine.Random.Range(0, _earthTransitionPoints.Length)].position;
 
-        yield return new WaitForSeconds(2f);
+        if(_chosenMap != _lobbyMap)
+        {
+            yield return new WaitForSeconds(2f);
+        }
 
         RpcTranslateMap(battlePointOnEarth);
         yield return new WaitForSecondsRealtime(_cameraRollTime);
@@ -150,6 +192,7 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void RpcStartGame()
     {
+        _pinnedPlayerManager.CmdResetWeapon();
         OnGameStarted.Invoke();
     }
 
@@ -175,8 +218,6 @@ public class GameManager : NetworkBehaviour
 
         float cameraStartSize = _camera.orthographicSize;
 
-        _audioSource.Play();
-
         while (progress <= 1f)
         {
             _camera.orthographicSize = Mathf.Lerp(cameraStartSize, cameraStartSize+450f, _earthTransitionCurve.Evaluate(progress));
@@ -188,6 +229,8 @@ public class GameManager : NetworkBehaviour
         }
 
         _mapParent.SetActive(false);
+
+        OnGameStartRestarting.Invoke();
 
         progress = 0f;
         
@@ -204,8 +247,6 @@ public class GameManager : NetworkBehaviour
 
         _mapParent.SetActive(true);
 
-        OnGameStartRestarting.Invoke();
-
         progress = 0f;
 
         while(progress <= 1f)
@@ -221,7 +262,18 @@ public class GameManager : NetworkBehaviour
 
     private void SpawnWeapons()
     {
+        foreach (var weapon in _spawnedWeapons)
+        {
+            if (weapon == null) continue;
+
+            NetworkServer.Destroy(weapon.ThisGO);
+            Destroy(weapon.ThisGO);
+        }
+
+
         List<Transform> chosenWeaponSpawnPoints = new List<Transform>();
+
+        int index = 0;
 
         for(int i = 0; i < _weaponCount; i++)
         {
@@ -230,7 +282,10 @@ public class GameManager : NetworkBehaviour
             Transform chosenSpawnPoint = GetSpawnPoint(ref chosenWeaponSpawnPoints, _chosenMap.WeaponsSpawnPoints);
 
             FloorWeapon spawnedWeapon = Instantiate(chosenWeapon, chosenSpawnPoint.position, Quaternion.identity);
+
             NetworkServer.Spawn(spawnedWeapon.gameObject);
+
+            RpcPlayInstaParts(index, chosenSpawnPoint.position);
 
             _spawnedWeapons.Add(spawnedWeapon);
 
@@ -244,6 +299,18 @@ public class GameManager : NetworkBehaviour
                 _spawnedWeapons.Add(ammoGameObject.GetComponent<ISpawnable>());
             }
         }
+    }
+
+    public void AddSpawnedThing(ISpawnable spawnedThing)
+    {
+        _spawnedWeapons.Add(spawnedThing);
+    }
+
+    [ClientRpc]
+    private void RpcPlayInstaParts(int index, Vector3 position)
+    {
+        _instaParticles[index].transform.position = position;
+        _instaParticles[index].PlayParticles();
     }
 
     private Transform GetSpawnPoint(ref List<Transform> choosedTransforms, Transform[] allTransforms)

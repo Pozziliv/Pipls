@@ -6,8 +6,12 @@ public class AutoHostClient : MonoBehaviour
 {
     [SerializeField] NetworkManager networkManager;
 
+    private Camera _camera;
+
     void Start()
     {
+        _camera = Camera.main;
+        _camera.orthographicSize = _camera.orthographicSize + 450;
         if (!Application.isBatchMode)
         { //Headless build
             Debug.Log($"=== Client Build ===");
@@ -16,6 +20,7 @@ public class AutoHostClient : MonoBehaviour
         else
         {
             Debug.Log($"=== Server Build ===");
+            //networkManager.StartServer();
         }
     }
 

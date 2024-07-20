@@ -3,6 +3,8 @@ using Mirror;
 
 public class Bullet : ShootAmmo
 {
+    [SerializeField] private float _attackFlySpeed = 18;
+
     [ServerCallback]
     private void Update()
     {
@@ -29,7 +31,7 @@ public class Bullet : ShootAmmo
 
     public override void StartFly(float rotation)
     {
-        _rigidbody.AddForce(Quaternion.Euler(0, 0, rotation - 90f) * Vector2.up * 18f, ForceMode2D.Impulse);
+        _rigidbody.AddForce(Quaternion.Euler(0, 0, rotation - 90f) * Vector2.up * _attackFlySpeed, ForceMode2D.Impulse);
     }
 
     public override void StopFly()

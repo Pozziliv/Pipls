@@ -20,6 +20,7 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float _dashCooldown = 5f;
     [SerializeField] private SpriteRenderer _dashIndicator;
     [SerializeField] private ParticleSystem _dashParticles;
+    [SerializeField] private AudioSource _dashAudioSource;
 
     private Vector2 _input;
 
@@ -36,7 +37,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (isLocalPlayer == false) return;
 
-        if (_playerManager.IsDead == true || _inDash) return;
+        if (_playerManager.IsDead == true || _inDash == true || _playerManager.GameRestarted == true) return;
 
         _input = (Vector2.up * Input.GetAxisRaw("Vertical") + Vector2.right * Input.GetAxisRaw("Horizontal")).normalized;
 
@@ -50,7 +51,13 @@ public class PlayerMovement : NetworkBehaviour
     {
         if(isLocalPlayer == false) return;
 
-        if(_playerManager.IsDead == true || _inDash) return;
+        if(_playerManager.IsDead == true || _inDash == true) return;
+
+        if(_playerManager.GameRestarted == true)
+        {
+            _rigidbody.velocity = Vector2.zero;
+            return;
+        }
 
         if (_isKnockBack == true)
         {
@@ -85,6 +92,8 @@ public class PlayerMovement : NetworkBehaviour
         _playerManager.CmdSetInvulnerability(true);
 
         _rigidbody.velocity = (direction == Vector2.zero ? (Vector2)(playerRotation * Vector2.right) : direction) * _dashForce;
+
+        _dashAudioSource.Play();
 
         yield return new WaitForSeconds(_dashTime);
 

@@ -6,6 +6,9 @@
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
+/[Bb]uild2/
+/[Bb]uildFW/
+/ServerBuild/
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
@@ -25,6 +28,7 @@
 
 # Visual Studio cache directory
 .vs/
+.idea/
 
 # Gradle cache directory
 .gradle/
@@ -61,6 +65,7 @@ sysinfo.txt
 *.aab
 *.unitypackage
 *.app
+*.rar
 
 # Crashlytics generated file
 crashlytics-build.properties

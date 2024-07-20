@@ -10,6 +10,15 @@ public class LobbyUI : NetworkBehaviour
     [SerializeField] private TMP_InputField _nameInputField;
     [SerializeField] private TMP_InputField _passwordInputField;
 
+    private Camera _camera;
+
+    private void Start()
+    {
+        _camera = Camera.main;
+
+        _camera.orthographicSize += 450;
+    }
+
     public void HostButton()
     {
         var name = _nameInputField.text;

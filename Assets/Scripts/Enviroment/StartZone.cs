@@ -1,5 +1,4 @@
 using Mirror;
-using System.Collections;
 using UnityEngine;
 
 public class StartZone : NetworkBehaviour
@@ -13,7 +12,7 @@ public class StartZone : NetworkBehaviour
 
     private Material _material;
 
-    private int _playersCount;
+    [SyncVar] private int _playersCount;
     private int _playersInZone;
 
     private bool _activated = false;
@@ -25,7 +24,10 @@ public class StartZone : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        _playersCount = _gameManager.GetPlayersCount();
+        if (isServer)
+        {
+            _playersCount = _gameManager.GetPlayersCount();
+        }
 
         _playersInZone += 1;
     }

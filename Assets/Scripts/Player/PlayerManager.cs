@@ -1,54 +1,66 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
 public class PlayerManager : NetworkBehaviour
 {
+    [Header("For Colors")]
     [SerializeField] private SpriteRenderer _body;
     [SerializeField] private SpriteRenderer[] _hands;
     [SerializeField] private ParticleSystem[] _particles;
+    [SerializeField] private SpriteRenderer _upperTag;
+    [SerializeField] private SpriteRenderer _crownTag;
 
     [SerializeField] private Sprite[] _bodySprites;
     [SerializeField] private Sprite[] _handsSprites;
-    [SerializeField] private Color[] _particleColors;
+    [SerializeField] private Color[] _colors;
 
-    [SyncVar(hook = nameof(SetSprites))] private int _index = -1;
-
-    [SerializeField] private GameObject[] _main;
+    [Space, SerializeField] private GameObject[] _main;
     [SerializeField] private GameObject[] _die;
+    [SerializeField] private GameObject[] _instaParts;
 
     [SerializeField] private PlayerMovement _playerMovement;
     [SerializeField] private PlayerLooking _playerLooking;
+    [SerializeField] private PlayerAttack _playerAttack;
     [SerializeField] private PlayerHealth _playerHealth;
 
     [SerializeField] private Rigidbody2D _rigidbody;
     [SerializeField] private Collider2D _bodyCollider;
 
+    [SyncVar(hook = nameof(SetSprites))] private int _index = -1;
+
     [SyncVar] private bool _isDead = false;
     [SyncVar] private bool _isInvulnerable = false;
+    /*[SyncVar(hook = nameof(SetCrown))] */private bool _hasCrown = false;
 
     private bool _gameStarted = false;
+    private bool _gameRestarted = false;
     private GameManager _gameManager;
+    private int _gamesCount = 0;
 
     public Action OnDead;
 
     public int Index => _index;
     public bool IsDead => _isDead;
     public bool GameStarted => _gameStarted;
+    public bool GameRestarted => _gameRestarted;
     public bool IsInvulnerable => _isInvulnerable;
+    public Quaternion BodyRotation => _playerLooking.GameModel.rotation;
 
     private void OnEnable()
     {
         if(_gameManager != null)
         {
             _gameManager.OnGameStartRestarting += HideMainParts;
+            _gameManager.OnGameStartRestarting += GameEnd;
 
+            if (isServer)
+            {
+                _gameManager.OnGameStarted += HealthReset;
+            }
             _gameManager.OnGameStarted += GameStart;
             _gameManager.OnGameStarted += ShowMainParts;
             _gameManager.OnGameStarted += HideDieParts;
-            _gameManager.OnGameStarted += HealthReset;
         }
     }
 
@@ -57,11 +69,18 @@ public class PlayerManager : NetworkBehaviour
         if(_gameManager != null)
         {
             _gameManager.OnGameStartRestarting -= HideMainParts;
+            _gameManager.OnGameStartRestarting -= GameEnd;
 
             _gameManager.OnGameStarted -= GameStart;
             _gameManager.OnGameStarted -= ShowMainParts;
             _gameManager.OnGameStarted -= HideDieParts;
-            _gameManager.OnGameStarted -= HealthReset;
+
+            if (isServer)
+            {
+                _gameManager.OnGameStarted -= HealthReset;
+            }
+
+            _gameManager.ResolvePlayerIndex(_index);
         }
     }
 
@@ -76,12 +95,12 @@ public class PlayerManager : NetworkBehaviour
             _index = _gameManager.SetPlayerIndex();
         }
 
-        if(_gameManager != null) 
+        if(_gameManager != null)
         {
+            _gameManager.OnGameStarted += HealthReset;
             _gameManager.OnGameStarted += GameStart;
             _gameManager.OnGameStarted += ShowMainParts;
             _gameManager.OnGameStarted += HideDieParts;
-            _gameManager.OnGameStarted += HealthReset;
         }
     }
 
@@ -92,21 +111,48 @@ public class PlayerManager : NetworkBehaviour
         _gameManager = FindFirstObjectByType<GameManager>();
 
         if (_gameManager != null) { 
-            _gameManager.SetPlayerManager(this);
+            if(isLocalPlayer)
+                _gameManager.SetPlayerManager(this);
 
             _gameManager.OnGameStartRestarting += HideMainParts;
+            _gameManager.OnGameStartRestarting += GameEnd;
 
             _gameManager.OnGameStarted += GameStart;
             _gameManager.OnGameStarted += ShowMainParts;
             _gameManager.OnGameStarted += HideDieParts;
-            _gameManager.OnGameStarted += HealthReset;
+        }
+
+        if (isLocalPlayer)
+        {
+            _upperTag.gameObject.SetActive(true);
         }
     }
 
     public void GameStart()
     {
+        if(_isDead is false && _gamesCount != 0)
+        {
+            _hasCrown = true;
+            SetCrown(true);
+        }
+
         _gameStarted = true;
+        _gameRestarted = false;
         _isDead = false;
+
+        _gamesCount++;
+    }
+
+    public void GameEnd()
+    {
+        _gameStarted = false;
+        _gameRestarted = true;
+        _playerAttack.StopWeaponAttack();
+    }
+
+    private void SetCrown(bool crownHasable)
+    {
+        _crownTag.gameObject.SetActive(crownHasable);
     }
 
     private void SetSprites(int oldIndex, int newIndex)
@@ -116,10 +162,11 @@ public class PlayerManager : NetworkBehaviour
         {
             hand.sprite = _handsSprites[newIndex % 4];
         }
+        _upperTag.color = _colors[newIndex % 4];
         foreach (var particle in _particles)
         {
             var mainPart = particle.main;
-            mainPart.startColor = _particleColors[newIndex % 4];
+            mainPart.startColor = _colors[newIndex % 4];
         }
     }
 
@@ -143,6 +190,9 @@ public class PlayerManager : NetworkBehaviour
         OnDead.Invoke();
         HideMainParts();
         ShowDieParts();
+
+        _hasCrown = false;
+        SetCrown(false);
     }
 
     private void HideMainParts()
@@ -151,6 +201,12 @@ public class PlayerManager : NetworkBehaviour
         {
             part.SetActive(false);
         }
+
+        if (isLocalPlayer)
+        {
+            _upperTag.gameObject.SetActive(false);
+        }
+
         _rigidbody.velocity = Vector3.zero;
         _bodyCollider.enabled = false;
     }
@@ -161,8 +217,16 @@ public class PlayerManager : NetworkBehaviour
         {
             part.SetActive(true);
         }
+
+        if (isLocalPlayer)
+        {
+            _upperTag.gameObject.SetActive(true);
+        }
+
         _rigidbody.velocity = Vector3.zero;
         _bodyCollider.enabled = true;
+
+        PlayInstaParts();
     }
 
     private void HideDieParts()
@@ -178,6 +242,14 @@ public class PlayerManager : NetworkBehaviour
         foreach (var part in _die)
         {
             part.SetActive(true);
+        }
+    }
+
+    private void PlayInstaParts()
+    {
+        foreach (var part in _instaParts)
+        {
+            part.GetComponent<ParticleSystem>().Play();
         }
     }
 
@@ -208,5 +280,11 @@ public class PlayerManager : NetworkBehaviour
     public void CmdSetInvulnerability(bool invulnerability)
     {
         _isInvulnerable = invulnerability;
+    }
+
+    [Command]
+    public void CmdResetWeapon()
+    {
+        _playerAttack.ServerChangeWeapon("Arms");
     }
 }
